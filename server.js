@@ -1,6 +1,6 @@
 // load the things we need
-var express = require('express');
-var app = express();
+const express = require('express');
+const app = express();
 
 // set the view engine to ejs
 app.set('view engine', 'ejs');
