@@ -7,6 +7,16 @@ app.set('view engine', 'ejs');
 
 // use res.render to load up an ejs view file
 
+// home page
+app.get("/", function(req, res) {
+    // const sql = "select * from nodejs";
+    // connection.query(sql, function(err, result, fields) {
+    //     if (err) throw err;
+    //     console.log(result);
+    // });
+    res.render('pages/index');
+})
+
 // login page
 app.get('/login', function(req, res) {
     res.render('pages/login');
