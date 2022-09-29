@@ -17,5 +17,10 @@ app.get('/register', function(req, res) {
     res.render('pages/register');
 });
 
+// home page
+app.get("/", function(req, res) {
+    res.render('pages/index');
+})
+
 app.listen(8080);
 console.log('8080 port');
