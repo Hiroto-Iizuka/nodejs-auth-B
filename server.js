@@ -18,7 +18,7 @@ app.get('/register', function(req, res) {
 
 
 // use res.render to load up an ejs view file
-app.use(express.urlencoded({ extended: true })) 
+app.use(express.urlencoded({ extended: true }))
 app.post(
     '/register',
     [
@@ -40,17 +40,11 @@ app.post(
                 messages.push(error.msg);
             });
             console.log(messages);
-            res.render('pages/register');
+            res.render('pages/register', { messages: messages });
         } else { 
             res.render('pages/index');        
         }
     }
-    // 今回は登録不要なのでコンソールに表示
-    // User.create({
-    //     username: req.body.username,
-    //     email: req.body.email,
-    //     password: req.body.password,
-    // }).then(res.render('pages/index'));
 );
 
 // home page
