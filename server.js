@@ -27,9 +27,7 @@ app.post(
         check('password').not().isEmpty().withMessage('passwordが空です。'),
         check('password').isLength({ min: 7 }).withMessage('passwordは７文字以上必要です。'),
         check('password').custom((value, { req }) => {
-            if (value === req.body.confirmPassword) {
-                return true;
-            }
+            return value === req.body.confirmPassword
         }).withMessage('passwordとconfirmPasswordが一致しません。'),
     ],
     function (req, res) {
