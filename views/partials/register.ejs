@@ -8,18 +8,20 @@
 </head>
 <body>
   <h2>Register</h2>
-  <label>Name</label>
-  <input type="text">
-  <br />
-  <label>E-Mail Address</label>
-  <input type="email">
-  <br />
-  <label>Password</label>
-  <input type="password">
-  <br />
-  <label>Confirm Password</label>
-  <input type="password">
-  <br />
-  <button>Register</button>
+  <form action="/register" method="post">
+    <label>Name</label>
+    <input type="text" name="username">
+    <br />
+    <label>E-Mail Address</label>
+    <input type="email" name="email">
+    <br />
+    <label>Password</label>
+    <input type="password" name="password">
+    <br />
+    <label>Confirm Password</label>
+    <input type="password" name="confirmPassword">
+    <br />
+    <input type="submit" value="Register">
+  </form>
 </body>
 </html>
