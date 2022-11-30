@@ -2,6 +2,19 @@
 const express = require('express');
 const app = express();
 const { check, validationResult } = require('express-validator');
+const mysql = require('mysql');
+
+const con = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'password',
+    database: 'express_auth_b',
+});
+
+con.connect(function(err) {
+    if (err) throw err;
+    console.log('MySQL Connected');
+});
 
 // set the view engine to ejs
 app.set('view engine', 'ejs');
