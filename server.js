@@ -1,8 +1,11 @@
 // load the things we need
 const express = require('express');
+const path = require('path');
+const bodyParser = require('body-parser');
 const app = express();
 const { check, validationResult } = require('express-validator');
 const mysql = require('mysql');
+
 
 const con = mysql.createConnection({
     host: 'localhost',
@@ -15,6 +18,8 @@ con.connect(function(err) {
     if (err) throw err;
     console.log('MySQL Connected');
 });
+
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // set the view engine to ejs
 app.set('view engine', 'ejs');
@@ -35,12 +40,12 @@ app.use(express.urlencoded({ extended: true }))
 app.post(
     '/register',
     [
-        check('username').not().isEmpty().withMessage('usernameが空です。'),
+        check('name').not().isEmpty().withMessage('nameが空です。'),
         check('email').not().isEmpty().withMessage('emailが空です。'),
         check('password').not().isEmpty().withMessage('passwordが空です。'),
-        check('password').isLength({ min: 7 }).withMessage('passwordは７文字以上必要です。'),
+        check('password').isLength({ min: 1 }).withMessage('passwordは1文字以上必要です。'),
         check('password').custom((value, { req }) => {
-            return value === req.body.confirmPassword
+            return value === req.body.confirm_password
         }).withMessage('passwordとconfirmPasswordが一致しません。'),
     ],
     function (req, res) {
@@ -53,7 +58,13 @@ app.post(
             console.log(messages);
             res.render('pages/register', { messages: messages });
         } else { 
-            res.render('pages/index');        
+            // res.render('pages/index');
+            const sql = "INSERT INTO users SET ?"
+            con.query(sql, req.body, function(err, result, fields){
+                if (err) throw err;
+                console.log(result);
+                res.render('pages/index')
+            });
         }
     }
 );
