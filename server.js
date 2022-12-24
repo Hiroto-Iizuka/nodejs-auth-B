@@ -20,6 +20,22 @@ con.connect(function(err) {
     console.log('MySQL Connected');
 });
 
+// 直でURLを叩いた時にはログインページへリダイレクト
+const isLoggedIn = (req, res, next) => {
+    try {
+      const token = req.headers.authorization.split(' ')[1];
+      const decoded = jwt.verify(
+        token,
+        'SECRETKEY'
+      );
+      console.log(req.userData)
+      req.userData = decoded;
+      next();
+    } catch (err) {
+      res.redirect('/login');
+    }
+}
+  
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // set the view engine to ejs
@@ -100,7 +116,7 @@ app.post(
 );
 
 // home page
-app.get('/', function(req, res) {
+app.get('/', isLoggedIn, function(req, res) {
     res.render('pages/index');
 })
 
