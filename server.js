@@ -3,9 +3,10 @@ const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
 const app = express();
+const router = express.Router()
 const { check, validationResult } = require('express-validator');
 const mysql = require('mysql');
-
+const jwt = require("jsonwebtoken");
 
 const con = mysql.createConnection({
     host: 'localhost',
@@ -27,6 +28,35 @@ app.set('view engine', 'ejs');
 // login page
 app.get('/login', function(req, res) {
     res.render('pages/login');
+});
+app.post('/login', (req, res, next) => {
+    const sql = `SELECT * FROM users WHERE email="${req.body.email}";`
+    con.query(sql, (err, result) => {
+        if (err) {
+            return res.status(400).send({
+                msg: err
+            });
+        }
+        if (!result.length) {
+            return res.status(401).send({
+                msg: 'email or password is incorrect! 1'
+            });
+        }
+        if (req.body.password === result[0]['password']) {
+            const token = jwt.sign({
+                email: result[0].email,
+                userId: result[0].id
+            },
+            'SECRETKEY', {
+                expiresIn: '7d'
+            });
+            res.render('pages/index', { token: token, user: result[0] });
+        } else {
+            return res.status(401).send({
+                msg: 'email or password is incorrect! 2'
+            });
+        }        
+    });
 });
 
 // register page
@@ -70,7 +100,7 @@ app.post(
 );
 
 // home page
-app.get("/", function(req, res) {
+app.get('/', function(req, res) {
     res.render('pages/index');
 })
 
