@@ -109,7 +109,14 @@ app.post(
             // res.render('pages/index');
             const sql = "INSERT INTO users SET ?"
             con.query(sql, req.body, function(err, result, fields){
-                if (err) throw err;
+                // if (err) throw console.log(err);
+                if (err) {
+                    console.log("Error while creating new entry", err);
+                    return res.status(500).json({
+                      success: false,
+                      message: (err.code == 'ER_DUP_ENTRY' || err.errno == 1062) ? "Email already exists!" : "Unknown error"
+                    });
+                }        
                 console.log(result);
                 res.render('pages/index')
             });
