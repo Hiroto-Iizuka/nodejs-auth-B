@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 // load the things we need
 const express = require('express');
 const path = require('path');
@@ -9,10 +11,10 @@ const mysql = require('mysql');
 const jwt = require("jsonwebtoken");
 
 const con = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'password',
-    database: 'express_auth_b',
+    host: process.env.HOSTNAME,
+    user: process.env.USERNAME,
+    password: process.env.PASSWORD,
+    database: process.env.DATABASE,
 });
 
 con.connect(function(err) {
