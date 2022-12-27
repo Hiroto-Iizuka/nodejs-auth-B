@@ -2,12 +2,12 @@ require('dotenv').config();
 
 // load the things we need
 const express = require('express');
-const path = require('path');
 const bodyParser = require('body-parser');
 const app = express();
-const router = express.Router()
 const { check, validationResult } = require('express-validator');
 const mysql = require('mysql');
+const bcrypt = require('bcrypt');
+const saltRounds = 10
 const jwt = require("jsonwebtoken");
 
 const con = mysql.createConnection({
@@ -107,18 +107,22 @@ app.post(
             res.render('pages/register', { messages: messages });
         } else { 
             // res.render('pages/index');
-            const sql = "INSERT INTO users SET ?"
-            con.query(sql, req.body, function(err, result, fields){
-                // if (err) throw console.log(err);
-                if (err) {
-                    console.log("Error while creating new entry", err);
-                    return res.status(500).json({
-                      success: false,
-                      message: (err.code == 'ER_DUP_ENTRY' || err.errno == 1062) ? "Email already exists!" : "Unknown error"
-                    });
-                }        
-                console.log(result);
-                res.render('pages/index')
+            bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+                req.body.password = hash;
+                req.body.confirm_password = hash;
+                const sql = "INSERT INTO users SET ?"
+                con.query(sql, req.body, function(err, result, fields){
+                    // if (err) throw console.log(err);
+                    if (err) {
+                        console.log("Error while creating new entry", err);
+                        return res.status(500).json({
+                          success: false,
+                          message: (err.code == 'ER_DUP_ENTRY' || err.errno == 1062) ? "Email already exists!" : "Unknown error"
+                        });
+                    }        
+                    console.log(result);
+                    res.render('pages/index')
+                });
             });
         }
     }
