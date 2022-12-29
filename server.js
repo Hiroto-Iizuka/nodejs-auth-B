@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 // load the things we need
+const { PrismaClient } = require("@prisma/client");
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
@@ -10,11 +11,14 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10
 const jwt = require("jsonwebtoken");
 
+const prisma = new PrismaClient();
+
 const con = mysql.createConnection({
     host: process.env.HOSTNAME,
     user: process.env.USERNAME,
     password: process.env.PASSWORD,
     database: process.env.DATABASE,
+    port: process.env.PORT
 });
 
 con.connect(function(err) {
@@ -47,44 +51,30 @@ app.set('view engine', 'ejs');
 app.get('/login', function(req, res) {
     res.render('pages/login');
 });
-app.post('/login', (req, res, next) => {
-    const sql = `SELECT * FROM users WHERE email="${req.body.email}";`
-    con.query(sql, (err, result) => {
-        if (err) {
-            return res.status(400).send({
-                msg: err
-            });
-        }
-        if (!result.length) {
-            return res.status(401).send({
-                msg: 'email or password is incorrect! 1'
-            });
-        }
-        if (req.body.password === result[0]['password']) {
-            const token = jwt.sign({
-                email: result[0].email,
-                userId: result[0].id
-            },
-            'SECRETKEY', {
-                expiresIn: '7d'
-            });
-            res.render('pages/index', { token: token, user: result[0] });
-        } else {
-            return res.status(401).send({
-                msg: 'email or password is incorrect! 2'
-            });
-        }        
+app.post('/login', async (req, res, next) => {
+    const { id, email, password } = req.body;
+    const user = await prisma.user.findUnique({where: {email}})
+    if (user && bcrypt.compareSync(password, user.password)) {
+    const token = jwt.sign({
+        email: email,
+        userId: id
+    },
+    'SECRETKEY', {
+        expiresIn: '7d'
     });
+    res.render('pages/index', { token: token, user: user });
+    } else {
+        return res.status(401).send({
+            msg: 'email or password is incorrect!'
+        });
+    }        
 });
 
 // register page
 app.get('/register', function(req, res) {
     res.render('pages/register');
 });
-
-
-// use res.render to load up an ejs view file
-app.use(express.urlencoded({ extended: true }))
+app.use(express.urlencoded({ extended: true }));
 app.post(
     '/register',
     [
@@ -105,24 +95,23 @@ app.post(
             });
             console.log(messages);
             res.render('pages/register', { messages: messages });
-        } else { 
-            // res.render('pages/index');
-            bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+        } else {
+            bcrypt.hash(req.body.password, saltRounds, async function(err, hash) {
                 req.body.password = hash;
                 req.body.confirm_password = hash;
-                const sql = "INSERT INTO users SET ?"
-                con.query(sql, req.body, function(err, result, fields){
-                    // if (err) throw console.log(err);
-                    if (err) {
-                        console.log("Error while creating new entry", err);
-                        return res.status(500).json({
-                          success: false,
-                          message: (err.code == 'ER_DUP_ENTRY' || err.errno == 1062) ? "Email already exists!" : "Unknown error"
-                        });
-                    }        
-                    console.log(result);
-                    res.render('pages/index')
+                const { name, email, password, confirm_password } = req.body;
+                try {await prisma.user.create({
+                    data: {
+                        name,
+                        email,
+                        password,
+                        confirm_password,
+                    },
                 });
+                res.render('pages/index');
+            } catch (err) {
+                return res.status(400).json(err);
+            }
             });
         }
     }
