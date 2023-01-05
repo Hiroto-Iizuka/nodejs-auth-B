@@ -1,7 +1,34 @@
+require('dotenv').config();
+
 // load the things we need
+const { PrismaClient } = require("@prisma/client");
 const express = require('express');
+const bodyParser = require('body-parser');
 const app = express();
 const { check, validationResult } = require('express-validator');
+const bcrypt = require('bcrypt');
+const saltRounds = 10
+const jwt = require("jsonwebtoken");
+
+const prisma = new PrismaClient();
+
+// 直でURLを叩いた時にはログインページへリダイレクト
+const isLoggedIn = (req, res, next) => {
+    try {
+      const token = req.headers.authorization.split(' ')[1];
+      const decoded = jwt.verify(
+        token,
+        'SECRETKEY'
+      );
+      console.log(req.userData)
+      req.userData = decoded;
+      next();
+    } catch (err) {
+      res.redirect('/login');
+    }
+}
+  
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // set the view engine to ejs
 app.set('view engine', 'ejs');
@@ -10,24 +37,39 @@ app.set('view engine', 'ejs');
 app.get('/login', function(req, res) {
     res.render('pages/login');
 });
+app.post('/login', async (req, res, next) => {
+    const { id, email, password } = req.body;
+    const user = await prisma.user.findUnique({where: {email}})
+    if (user && bcrypt.compareSync(password, user.password)) {
+    const token = jwt.sign({
+        email: email,
+        userId: id
+    },
+    'SECRETKEY', {
+        expiresIn: '7d'
+    });
+    res.render('pages/index', { token: token, user: user });
+    } else {
+        return res.status(401).send({
+            msg: 'email or password is incorrect!'
+        });
+    }        
+});
 
 // register page
 app.get('/register', function(req, res) {
     res.render('pages/register');
 });
-
-
-// use res.render to load up an ejs view file
-app.use(express.urlencoded({ extended: true }))
+app.use(express.urlencoded({ extended: true }));
 app.post(
     '/register',
     [
-        check('username').not().isEmpty().withMessage('usernameが空です。'),
+        check('name').not().isEmpty().withMessage('nameが空です。'),
         check('email').not().isEmpty().withMessage('emailが空です。'),
         check('password').not().isEmpty().withMessage('passwordが空です。'),
-        check('password').isLength({ min: 7 }).withMessage('passwordは７文字以上必要です。'),
+        check('password').isLength({ min: 1 }).withMessage('passwordは1文字以上必要です。'),
         check('password').custom((value, { req }) => {
-            return value === req.body.confirmPassword
+            return value === req.body.confirm_password
         }).withMessage('passwordとconfirmPasswordが一致しません。'),
     ],
     function (req, res) {
@@ -39,14 +81,30 @@ app.post(
             });
             console.log(messages);
             res.render('pages/register', { messages: messages });
-        } else { 
-            res.render('pages/index');        
+        } else {
+            bcrypt.hash(req.body.password, saltRounds, async function(err, hash) {
+                req.body.password = hash;
+                req.body.confirm_password = hash;
+                const { name, email, password, confirm_password } = req.body;
+                try {await prisma.user.create({
+                    data: {
+                        name,
+                        email,
+                        password,
+                        confirm_password,
+                    },
+                });
+                res.render('pages/index');
+            } catch (err) {
+                return res.status(400).json(err);
+            }
+            });
         }
     }
 );
 
 // home page
-app.get("/", function(req, res) {
+app.get('/', isLoggedIn, function(req, res) {
     res.render('pages/index');
 })
 
