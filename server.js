@@ -6,25 +6,11 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 const { check, validationResult } = require('express-validator');
-const mysql = require('mysql');
 const bcrypt = require('bcrypt');
 const saltRounds = 10
 const jwt = require("jsonwebtoken");
 
 const prisma = new PrismaClient();
-
-const con = mysql.createConnection({
-    host: process.env.HOSTNAME,
-    user: process.env.USERNAME,
-    password: process.env.PASSWORD,
-    database: process.env.DATABASE,
-    port: process.env.PORT
-});
-
-con.connect(function(err) {
-    if (err) throw err;
-    console.log('MySQL Connected');
-});
 
 // 直でURLを叩いた時にはログインページへリダイレクト
 const isLoggedIn = (req, res, next) => {
