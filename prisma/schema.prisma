@@ -16,4 +16,13 @@ model User {
   name    String?
   password String?
   confirm_password String?
+  Posts   Post[]
+}
+
+model Post {
+  id       Int    @id @default(autoincrement())
+  title    String
+  content String?
+  author   User @relation(fields: [authorId], references: [id])
+  authorId Int
 }

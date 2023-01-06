@@ -86,7 +86,7 @@ app.post(
                 req.body.password = hash;
                 req.body.confirm_password = hash;
                 const { name, email, password, confirm_password } = req.body;
-                try {await prisma.user.create({
+                try { await prisma.user.create({
                     data: {
                         name,
                         email,
@@ -99,6 +99,27 @@ app.post(
                 return res.status(400).json(err);
             }
             });
+        }
+    }
+);
+
+// post page
+app.get('/post', function(req, res) {
+    res.render('pages/post');
+});
+app.post('/posts',
+    async function (req, res) {
+        const { title, content, authorId } = req.body;
+        try { await prisma.post.create({
+            data: {
+                title,
+                content,
+                authorId,
+            },
+        });
+        res.render('pages/index');
+        } catch (err) {
+            return res.status(400).json(err);
         }
     }
 );
