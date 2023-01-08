@@ -5,10 +5,12 @@ const { PrismaClient } = require("@prisma/client");
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
-const { check, validationResult } = require('express-validator');
+const { check, validationResult, body } = require('express-validator');
 const bcrypt = require('bcrypt');
 const saltRounds = 10
 const jwt = require("jsonwebtoken");
+const localStorage = require('local-storage');
+const { decode } = require('json-web-token');
 
 const prisma = new PrismaClient();
 
@@ -29,6 +31,30 @@ const isLoggedIn = (req, res, next) => {
 }
   
 app.use(bodyParser.urlencoded({ extended: true }));
+// app.use((req, res, next) => {
+//     if (!req.headers.authorization) {
+//         const data = { message: 'Authorization required' };
+//         return res.status(401).send(data);
+//     }
+
+//     const token = req.headers.authorization.split(' ')[1];
+//     let decoded;
+//     try {
+//         decoded = jwt.verify(token, 'SECRETKEY');
+//     } catch (err) {
+//         console.error({err});
+//         const data = { message: `Invalid token: ${err.message}` };
+//         return res.status(401).send(data);
+//     }
+
+//     if (!decoded || decoded.user_id || decoded.user_id !== req.body.user_id) {
+//         const data = { message: `Invalid token or user_id unmatch: ${decoded.user_id}, ${req.body.user_id}` };
+//         return res.status(401).send(data);
+//     }
+
+//     next();
+// });
+
 
 // set the view engine to ejs
 app.set('view engine', 'ejs');
@@ -48,6 +74,7 @@ app.post('/login', async (req, res, next) => {
     'SECRETKEY', {
         expiresIn: '7d'
     });
+    localStorage.set('token', token);
     res.render('pages/index', { token: token, user: user });
     } else {
         return res.status(401).send({
@@ -109,18 +136,27 @@ app.get('/post', function(req, res) {
 });
 app.post('/posts',
     async function (req, res) {
-        const { title, content, authorId } = req.body;
-        try { await prisma.post.create({
-            data: {
-                title,
-                content,
-                authorId,
-            },
-        });
-        res.render('pages/index');
-        } catch (err) {
-            return res.status(400).json(err);
-        }
+        const token = localStorage.get('token');
+        try {
+            const decoded = jwt.verify(token, 'SECRETKEY');
+            const email = decoded.email;
+            const user = await prisma.user.findUnique({where: {email}});
+            const authorId = user.id;
+            const { title, content } = req.body;
+            try { await prisma.post.create({
+                data: {
+                    title,
+                    content,
+                    authorId,
+                },
+            });
+            res.render('pages/index');
+            } catch (err) {
+                return res.status(400).json(err);
+            }    
+          } catch (e) {
+            console.error({e});
+          }
     }
 );
 
