@@ -135,7 +135,17 @@ app.get('/post', function(req, res) {
     res.render('pages/post');
 });
 app.post('/posts',
+    [check('content').isLength({ max: 140 }).withMessage('contentは140文字以内です。')],
     async function (req, res) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            let messages = [];
+            errors.errors.forEach((error) => {
+                messages.push(error.msg);
+            });
+            console.log(messages);
+            res.render('pages/post', { messages: messages });
+        } else {
         const token = localStorage.get('token');
         try {
             const decoded = jwt.verify(token, 'SECRETKEY');
@@ -158,7 +168,7 @@ app.post('/posts',
             console.error({e});
           }
     }
-);
+});
 
 // home page
 app.get('/', isLoggedIn, function(req, res) {
