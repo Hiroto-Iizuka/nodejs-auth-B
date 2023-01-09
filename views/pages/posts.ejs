@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head'); %>
+</head>
+<body class="container">
+
+<header>
+    <%- include('../partials/loggedInHeader'); %>
+</header>
+
+<main>
+    <% posts.map(post => { %>
+      <div style="padding: 10px; margin-top: 10px; margin-bottom: 10px; border: 1px solid #333333;">
+        <ul style="list-style: none;">
+          <li><h4><%= post.title %></h4></li>
+          <li><%= post.content %></li>
+          <li>投稿者: <%= post.name %></li>
+          <li>☆</li>
+          <% if (currentUser.id === post.authorId) { %>
+            <form action="/edit" method="post">
+              <% const id = post.id; %>
+              <button type="submit" value="<%= id %>">編集</button>
+            </form>
+            <button onclick="location.href='/delete'">削除</button>
+          <% } %>
+        </ul>
+      </div>
+    <% }); %>
+</main>
+
+</body>
+</html>
+

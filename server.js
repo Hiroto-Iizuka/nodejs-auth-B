@@ -10,7 +10,6 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10
 const jwt = require("jsonwebtoken");
 const localStorage = require('local-storage');
-const { decode } = require('json-web-token');
 
 const prisma = new PrismaClient();
 
@@ -31,30 +30,6 @@ const isLoggedIn = (req, res, next) => {
 }
   
 app.use(bodyParser.urlencoded({ extended: true }));
-// app.use((req, res, next) => {
-//     if (!req.headers.authorization) {
-//         const data = { message: 'Authorization required' };
-//         return res.status(401).send(data);
-//     }
-
-//     const token = req.headers.authorization.split(' ')[1];
-//     let decoded;
-//     try {
-//         decoded = jwt.verify(token, 'SECRETKEY');
-//     } catch (err) {
-//         console.error({err});
-//         const data = { message: `Invalid token: ${err.message}` };
-//         return res.status(401).send(data);
-//     }
-
-//     if (!decoded || decoded.user_id || decoded.user_id !== req.body.user_id) {
-//         const data = { message: `Invalid token or user_id unmatch: ${decoded.user_id}, ${req.body.user_id}` };
-//         return res.status(401).send(data);
-//     }
-
-//     next();
-// });
-
 
 // set the view engine to ejs
 app.set('view engine', 'ejs');
@@ -134,6 +109,28 @@ app.post(
 app.get('/post', function(req, res) {
     res.render('pages/post');
 });
+
+//post index page
+app.get('/posts', async function(req, res) {
+    const posts = await prisma.post.findMany();
+    const postsJson = await Promise.all(posts.map(async post => {
+        const id = post.authorId;
+        const user = await prisma.user.findUnique({where: {id}});
+        post["name"] = user.name;
+        return post;
+    }));
+    const token = localStorage.get('token');
+    try {
+        const decoded = jwt.verify(token, 'SECRETKEY');
+        const email = decoded.email;
+        const user = await prisma.user.findUnique({where: {email}});
+        res.render('pages/posts', { posts: postsJson, currentUser: user });
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+// post create page
 app.post('/posts',
     [check('content').isLength({ max: 140 }).withMessage('contentは140文字以内です。')],
     async function (req, res) {
@@ -164,16 +161,21 @@ app.post('/posts',
             } catch (err) {
                 return res.status(400).json(err);
             }    
-          } catch (e) {
-            console.error({e});
+          } catch (err) {
+            console.error({err});
           }
     }
+});
+
+app.get('/edit', function (req, res) {
+    console.log(req.body.id);
+    res.render('pages/edit');
 });
 
 // home page
 app.get('/', isLoggedIn, function(req, res) {
     res.render('pages/index');
-})
+});
 
 app.listen(8080);
 console.log('8080 port');
