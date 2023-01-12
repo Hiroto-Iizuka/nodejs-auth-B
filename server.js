@@ -192,6 +192,20 @@ app.post('/update/:id', async (req, res) => {
     }
 });
 
+app.post('/delete/:id', async (req, res) => {
+    const id = parseInt(req.params.id);
+    try {
+        await prisma.post.delete({
+            where: {
+                id: id,
+            }
+        });
+        res.redirect('/posts');
+    } catch (err) {
+        return res.status(400).json(err);
+    }
+})
+
 // home page
 app.get('/', isLoggedIn, function(req, res) {
     res.render('pages/index');

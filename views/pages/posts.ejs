@@ -19,7 +19,9 @@
           <li>☆</li>
           <% if (currentUser.id === post.authorId) { %>
             <button><a href="/edit/<%= post.id %>">編集</a></button>
-            <button onclick="location.href='/delete'">削除</button>
+            <form action="/delete/<%= post.id %>" method="post">
+              <input type="submit" value="削除">
+            </form>
           <% } %>
         </ul>
       </div>
