@@ -18,10 +18,7 @@
           <li>投稿者: <%= post.name %></li>
           <li>☆</li>
           <% if (currentUser.id === post.authorId) { %>
-            <form action="/edit" method="post">
-              <% const id = post.id; %>
-              <button type="submit" value="<%= id %>">編集</button>
-            </form>
+            <button><a href="/edit/<%= post.id %>">編集</a></button>
             <button onclick="location.href='/delete'">削除</button>
           <% } %>
         </ul>

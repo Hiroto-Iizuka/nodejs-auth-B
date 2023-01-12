@@ -167,9 +167,29 @@ app.post('/posts',
     }
 });
 
-app.get('/edit', function (req, res) {
-    console.log(req.body.id);
-    res.render('pages/edit');
+app.get('/edit/:id', async function (req, res) {
+    const id = parseInt(req.params.id);
+    const post = await prisma.post.findUnique({where: {id}});
+    res.render('pages/edit', { post: post });
+});
+
+app.post('/update/:id', async (req, res) => {
+    const id = parseInt(req.params.id);
+    const { title, content } = req.body;
+    try {
+        await prisma.post.update({
+            where: {
+                id: id,
+            },
+            data: {
+                title: title,
+                content: content,
+            }
+        });
+        res.redirect('/posts');
+    } catch (err) {
+        return res.status(400).json(err);
+    }
 });
 
 // home page
