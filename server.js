@@ -28,6 +28,23 @@ const isLoggedIn = (req, res, next) => {
       res.redirect('/login');
     }
 }
+
+const checkJWT = async (req, res, next) => {
+    const token = localStorage.get('token');
+
+    if(!token) {
+        res.status(400).json([{ message: '権限がありません' }]);
+    } else {
+        try {
+            let user = await jwt.verify(token, 'SECRETKEY');
+            console.log(user);
+            req.user = user.email;
+            next();
+        } catch {
+            return res.status(400).json([{ message: 'トークンが一致しません'}]);
+        }
+    }
+}
   
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -111,7 +128,7 @@ app.get('/post', function(req, res) {
 });
 
 //post index page
-app.get('/posts', async function(req, res) {
+app.get('/posts', checkJWT, async function(req, res) {
     const posts = await prisma.post.findMany();
     const postsJson = await Promise.all(posts.map(async post => {
         const id = post.authorId;
@@ -132,6 +149,7 @@ app.get('/posts', async function(req, res) {
 
 // post create page
 app.post('/posts',
+    checkJWT,
     [check('content').isLength({ max: 140 }).withMessage('contentは140文字以内です。')],
     async function (req, res) {
         const errors = validationResult(req);
@@ -167,13 +185,13 @@ app.post('/posts',
     }
 });
 
-app.get('/edit/:id', async function (req, res) {
+app.get('/edit/:id', checkJWT, async function (req, res) {
     const id = parseInt(req.params.id);
     const post = await prisma.post.findUnique({where: {id}});
     res.render('pages/edit', { post: post });
 });
 
-app.post('/update/:id', async (req, res) => {
+app.post('/update/:id', checkJWT, async (req, res) => {
     const id = parseInt(req.params.id);
     const { title, content } = req.body;
     try {
@@ -192,7 +210,7 @@ app.post('/update/:id', async (req, res) => {
     }
 });
 
-app.post('/delete/:id', async (req, res) => {
+app.post('/delete/:id', checkJWT, async (req, res) => {
     const id = parseInt(req.params.id);
     try {
         await prisma.post.delete({
