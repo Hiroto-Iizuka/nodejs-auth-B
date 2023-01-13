@@ -5,7 +5,8 @@ const { PrismaClient } = require("@prisma/client");
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
-const { check, validationResult, body } = require('express-validator');
+const methodOverride = require("method-override");
+const { check, validationResult } = require('express-validator');
 const bcrypt = require('bcrypt');
 const saltRounds = 10
 const jwt = require("jsonwebtoken");
@@ -47,7 +48,7 @@ const checkJWT = async (req, res, next) => {
 }
   
 app.use(bodyParser.urlencoded({ extended: true }));
-
+app.use(methodOverride("_method"));
 // set the view engine to ejs
 app.set('view engine', 'ejs');
 
@@ -185,13 +186,13 @@ app.post('/posts',
     }
 });
 
-app.get('/edit/:id', checkJWT, async function (req, res) {
+app.patch('/posts/:id', checkJWT, async function (req, res) {
     const id = parseInt(req.params.id);
     const post = await prisma.post.findUnique({where: {id}});
     res.render('pages/edit', { post: post });
 });
 
-app.post('/update/:id', checkJWT, async (req, res) => {
+app.patch('/:id', checkJWT, async (req, res) => {
     const id = parseInt(req.params.id);
     const { title, content } = req.body;
     try {
@@ -210,7 +211,7 @@ app.post('/update/:id', checkJWT, async (req, res) => {
     }
 });
 
-app.post('/delete/:id', checkJWT, async (req, res) => {
+app.delete('/:id', checkJWT, async (req, res) => {
     const id = parseInt(req.params.id);
     try {
         await prisma.post.delete({
