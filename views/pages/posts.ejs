@@ -18,10 +18,10 @@
           <li>投稿者: <%= post.name %></li>
           <li>☆</li>
           <% if (currentUser.id === post.authorId) { %>
-            <form action="/posts/<%= post.id %>?_method=PATCH" method="post">
+            <form action="/posts/<%= post.id %>" method="get">
               <input type="submit" value="編集">
             </form>
-            <form action="/<%= post.id %>?_method=DELETE" method="post">
+            <form action="/posts/<%= post.id %>?_method=DELETE" method="post">
               <input type="submit" value="削除">
             </form>
           <% } %>

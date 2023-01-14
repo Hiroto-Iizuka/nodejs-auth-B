@@ -186,13 +186,13 @@ app.post('/posts',
     }
 });
 
-app.patch('/posts/:id', checkJWT, async function (req, res) {
+app.get('/posts/:id', checkJWT, async function (req, res) {
     const id = parseInt(req.params.id);
     const post = await prisma.post.findUnique({where: {id}});
     res.render('pages/edit', { post: post });
 });
 
-app.patch('/:id', checkJWT, async (req, res) => {
+app.patch('/posts/:id', checkJWT, async (req, res) => {
     const id = parseInt(req.params.id);
     const { title, content } = req.body;
     try {
@@ -211,7 +211,7 @@ app.patch('/:id', checkJWT, async (req, res) => {
     }
 });
 
-app.delete('/:id', checkJWT, async (req, res) => {
+app.delete('/posts/:id', checkJWT, async (req, res) => {
     const id = parseInt(req.params.id);
     try {
         await prisma.post.delete({

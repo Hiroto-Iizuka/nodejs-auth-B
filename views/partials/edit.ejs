@@ -7,7 +7,7 @@
   <title>Post</title>
 </head>
 <body>
-  <form action="/<%= post.id %>?_method=PATCH" method="post">
+  <form action="/posts/<%= post.id %>?_method=PATCH" method="post">
     <label>タイトル</label>
     <input type="text" name="title" value="<%= post.title %>">
     <br />
