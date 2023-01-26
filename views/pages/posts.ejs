@@ -16,7 +16,9 @@
           <li><h4><%= post.title %></h4></li>
           <li><%= post.content %></li>
           <li>投稿者: <%= post.name %></li>
-          <li>☆</li>
+          <form action="/favorite/<%= post.id %>" method="post">
+            <input type="submit" value="☆">
+          </form>
           <% if (currentUser.id === post.authorId) { %>
             <form action="/posts/<%= post.id %>" method="get">
               <input type="submit" value="編集">

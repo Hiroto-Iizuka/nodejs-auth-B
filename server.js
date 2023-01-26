@@ -11,6 +11,7 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10
 const jwt = require("jsonwebtoken");
 const localStorage = require('local-storage');
+const fs = require('fs');
 
 const prisma = new PrismaClient();
 
@@ -223,7 +224,34 @@ app.delete('/posts/:id', checkJWT, async (req, res) => {
     } catch (err) {
         return res.status(400).json(err);
     }
-})
+});
+
+app.post('/favorite/:id', async (req, res) => {
+    const token = localStorage.get('token');
+    try {
+        const decoded = jwt.verify(token, 'SECRETKEY');
+        const email = decoded.email;
+        const currentUser = await prisma.user.findUnique({where: {email}});
+        const userId = parseInt(currentUser.id);
+        const name = currentUser.name;
+        const postId = parseInt(req.params.id);
+        const post = prisma.post.findUnique({where: {postId}});
+        const title = post.title
+        const count = 1;
+        try { await prisma.favorite.create({
+            data: {
+                postId,
+                userId,
+            },
+        });
+        res.render('pages/index');
+        } catch (err) {
+            return res.status(400).json(err);
+        }
+      } catch (err) {
+        console.error({err});
+      }
+});
 
 // home page
 app.get('/', isLoggedIn, function(req, res) {
