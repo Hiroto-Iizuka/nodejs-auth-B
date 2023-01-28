@@ -244,11 +244,8 @@ app.post('/favorite/:id', async (req, res) => {
         const email = decoded.email;
         const currentUser = await prisma.user.findUnique({where: {email}});
         const userId = parseInt(currentUser.id);
-        const name = currentUser.name;
         const postId = parseInt(req.params.id);
         const post = prisma.post.findUnique({where: {postId}});
-        const title = post.title
-        const count = 1;
         try { await prisma.favorite.create({
             data: {
                 postId,
