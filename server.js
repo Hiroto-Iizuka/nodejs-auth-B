@@ -146,7 +146,14 @@ app.get('/posts', checkJWT, async function(req, res) {
     try {
         const decoded = jwt.verify(token, 'SECRETKEY');
         const email = decoded.email;
-        const user = await prisma.user.findUnique({where: {email}});
+        const user = await prisma.user.findUnique({
+            where: {
+                email
+            },
+            include: {
+                posts: true,
+            }
+        });
         res.render('pages/posts', { posts: postsJson, currentUser: user });
     } catch (err) {
         console.log(err);

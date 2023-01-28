@@ -17,7 +17,12 @@
           <li><%= post.content %></li>
           <li>投稿者: <%= post.name %></li>
           <form action="/favorite/<%= post.id %>" method="post">
+            <% const checkFavo = currentUser.posts.find(e => e.postId === post.id) %>
+            <% if (!checkFavo) { %>
             <input type="submit" value="☆">
+            <% } else { %>
+            <input type="submit" value="★">
+            <% } %>
           </form>
             <%= post["users"].length %>
           <% if (currentUser.id === post.authorId) { %>
