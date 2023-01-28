@@ -39,7 +39,6 @@ const checkJWT = async (req, res, next) => {
     } else {
         try {
             let user = await jwt.verify(token, 'SECRETKEY');
-            console.log(user);
             req.user = user.email;
             next();
         } catch {
@@ -252,13 +251,37 @@ app.post('/favorite/:id', async (req, res) => {
                 userId,
             },
         });
-        res.render('pages/index');
+        res.redirect('/posts');
         } catch (err) {
             return res.status(400).json(err);
         }
       } catch (err) {
         console.error({err});
       }
+});
+app.delete('/favorite/:id', async (req, res) => {
+    const postId = parseInt(req.params.id);
+    const token = localStorage.get('token');
+    try {
+        const decoded = jwt.verify(token, 'SECRETKEY');
+        const email = decoded.email;
+        const currentUser = await prisma.user.findUnique({where: {email}});
+        const userId = parseInt(currentUser.id);
+        try {
+            await prisma.favorite.delete({
+                where: {
+                    userId_postId: {
+                    userId: userId,
+                    postId: postId,
+                }}
+            });
+            res.redirect('/posts');
+        } catch (err) {
+            return res.status(400).json(err);
+        }
+    } catch (err) {
+        return res.status(400).json(err);
+    }
 });
 
 // home page
