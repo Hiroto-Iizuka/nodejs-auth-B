@@ -11,9 +11,6 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10
 const jwt = require("jsonwebtoken");
 const localStorage = require('local-storage');
-const fs = require('fs');
-const e = require('express');
-
 const prisma = new PrismaClient();
 
 // 直でURLを叩いた時にはログインページへリダイレクト
@@ -133,7 +130,7 @@ app.get('/post', function(req, res) {
 app.get('/posts', checkJWT, async function(req, res) {
     const posts = await prisma.post.findMany({
         include: {
-            users: true
+            users: true,
         }
     });
     const postsJson = await Promise.all(posts.map(async post => {
@@ -228,7 +225,7 @@ app.delete('/posts/:id', checkJWT, async (req, res) => {
     try {
         const postData = await prisma.post.findUnique({
             where: {
-                id: id
+                id: id,
             },
             include: {
                 users: true,
@@ -275,7 +272,6 @@ app.post('/favorite/:id', async (req, res) => {
         const currentUser = await prisma.user.findUnique({where: {email}});
         const userId = parseInt(currentUser.id);
         const postId = parseInt(req.params.id);
-        const post = prisma.post.findUnique({where: {postId}});
         try { await prisma.favorite.create({
             data: {
                 postId,
