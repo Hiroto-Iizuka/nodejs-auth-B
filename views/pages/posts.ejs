@@ -19,6 +19,7 @@
           <form action="/favorite/<%= post.id %>" method="post">
             <input type="submit" value="☆">
           </form>
+            <%= post["users"].length %>
           <% if (currentUser.id === post.authorId) { %>
             <form action="/posts/<%= post.id %>" method="get">
               <input type="submit" value="編集">

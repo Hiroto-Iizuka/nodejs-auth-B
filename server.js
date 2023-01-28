@@ -131,7 +131,11 @@ app.get('/post', function(req, res) {
 
 //post index page
 app.get('/posts', checkJWT, async function(req, res) {
-    const posts = await prisma.post.findMany();
+    const posts = await prisma.post.findMany({
+        include: {
+            users: true
+        }
+    });
     const postsJson = await Promise.all(posts.map(async post => {
         const id = post.authorId;
         const user = await prisma.user.findUnique({where: {id}});
