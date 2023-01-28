@@ -12,6 +12,7 @@ const saltRounds = 10
 const jwt = require("jsonwebtoken");
 const localStorage = require('local-storage');
 const fs = require('fs');
+const e = require('express');
 
 const prisma = new PrismaClient();
 
@@ -225,9 +226,39 @@ app.patch('/posts/:id', checkJWT, async (req, res) => {
 app.delete('/posts/:id', checkJWT, async (req, res) => {
     const id = parseInt(req.params.id);
     try {
+        const postData = await prisma.post.findUnique({
+            where: {
+                id: id
+            },
+            include: {
+                users: true,
+            }
+        });
+        const favorites = postData.users;
+        if (!!favorites.length) {
+            favorites.forEach(
+                async o => {
+                    const { userId, postId } = o;
+                    try {
+                        await prisma.favorite.delete({
+                            where: {
+                                userId_postId: {
+                                userId: userId,
+                                postId: postId,
+                            }}
+                        });
+                    } catch (err) {
+                        return res.status(400).json(err);
+                    }
+                }
+            );
+        }
         await prisma.post.delete({
             where: {
                 id: id,
+            },
+            include: {
+                users: true,
             }
         });
         res.redirect('/posts');
