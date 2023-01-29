@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <%- include('../partials/head'); %>
+     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css"
+          integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
 </head>
 <body class="container">
 
@@ -19,14 +21,15 @@
             <% const checkFavo = currentUser.posts.find(e => e.postId === post.id) %>
             <% if (!checkFavo) { %>
             <form action="/favorite/<%= post.id %>" method="post">
-              <input type="submit" value="☆">
+              <button type="submit" style="border: none; background: transparent; outline: none;"><i class="far fa-heart"></i></button>
+              <%= post["users"].length %>
             </form>
             <% } else { %>
             <form action="/favorite/<%= post.id %>?_method=DELETE" method="post">
-              <input type="submit" value="★">
+              <button type="submit" style="border: none; background: transparent; outline: none;"><i class="fas fa-heart"></i></button>
+              <%= post["users"].length %>
             </form>
             <% } %>
-            <%= post["users"].length %>
           <% if (currentUser.id === post.authorId) { %>
             <form action="/posts/<%= post.id %>" method="get">
               <input type="submit" value="編集">
