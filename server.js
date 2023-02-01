@@ -130,7 +130,7 @@ app.get('/post', function(req, res) {
 app.get('/posts', checkJWT, async function(req, res) {
     const posts = await prisma.post.findMany({
         include: {
-            users: true,
+            favorites: true,
         }
     });
     const postsJson = await Promise.all(posts.map(async post => {
@@ -148,7 +148,7 @@ app.get('/posts', checkJWT, async function(req, res) {
                 email
             },
             include: {
-                posts: true,
+                favorites: true,
             }
         });
         res.render('pages/posts', { posts: postsJson, currentUser: user });
@@ -228,10 +228,10 @@ app.delete('/posts/:id', checkJWT, async (req, res) => {
                 id: id,
             },
             include: {
-                users: true,
+                favorites: true,
             }
         });
-        const favorites = postData.users;
+        const favorites = postData.favorites;
         if (!!favorites.length) {
             favorites.forEach(
                 async o => {
@@ -255,7 +255,7 @@ app.delete('/posts/:id', checkJWT, async (req, res) => {
                 id: id,
             },
             include: {
-                users: true,
+                favorites: true,
             }
         });
         res.redirect('/posts');
