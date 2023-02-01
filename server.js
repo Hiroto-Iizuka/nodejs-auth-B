@@ -233,8 +233,8 @@ app.delete('/posts/:id', checkJWT, async (req, res) => {
         });
         const favorites = postData.favorites;
         if (!!favorites.length) {
-            favorites.forEach(
-                async o => {
+            await Promise.all(
+                favorites.map(async o => {
                     const { userId, postId } = o;
                     try {
                         await prisma.favorite.delete({
@@ -248,7 +248,7 @@ app.delete('/posts/:id', checkJWT, async (req, res) => {
                         return res.status(400).json(err);
                     }
                 }
-            );
+            ));
         }
         await prisma.post.delete({
             where: {
