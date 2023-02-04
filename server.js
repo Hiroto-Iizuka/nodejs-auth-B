@@ -11,7 +11,6 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10
 const jwt = require("jsonwebtoken");
 const localStorage = require('local-storage');
-
 const prisma = new PrismaClient();
 
 // 直でURLを叩いた時にはログインページへリダイレクト
@@ -38,7 +37,6 @@ const checkJWT = async (req, res, next) => {
     } else {
         try {
             let user = await jwt.verify(token, 'SECRETKEY');
-            console.log(user);
             req.user = user.email;
             next();
         } catch {
@@ -130,7 +128,11 @@ app.get('/post', function(req, res) {
 
 //post index page
 app.get('/posts', checkJWT, async function(req, res) {
-    const posts = await prisma.post.findMany();
+    const posts = await prisma.post.findMany({
+        include: {
+            favorites: true,
+        }
+    });
     const postsJson = await Promise.all(posts.map(async post => {
         const id = post.authorId;
         const user = await prisma.user.findUnique({where: {id}});
@@ -141,7 +143,14 @@ app.get('/posts', checkJWT, async function(req, res) {
     try {
         const decoded = jwt.verify(token, 'SECRETKEY');
         const email = decoded.email;
-        const user = await prisma.user.findUnique({where: {email}});
+        const user = await prisma.user.findUnique({
+            where: {
+                email
+            },
+            include: {
+                favorites: true,
+            }
+        });
         res.render('pages/posts', { posts: postsJson, currentUser: user });
     } catch (err) {
         console.log(err);
@@ -214,16 +223,93 @@ app.patch('/posts/:id', checkJWT, async (req, res) => {
 app.delete('/posts/:id', checkJWT, async (req, res) => {
     const id = parseInt(req.params.id);
     try {
+        const postData = await prisma.post.findUnique({
+            where: {
+                id: id,
+            },
+            include: {
+                favorites: true,
+            }
+        });
+        const favorites = postData.favorites;
+        if (!!favorites.length) {
+            await Promise.all(
+                favorites.map(async o => {
+                    const { userId, postId } = o;
+                    try {
+                        await prisma.favorite.delete({
+                            where: {
+                                userId_postId: {
+                                userId: userId,
+                                postId: postId,
+                            }}
+                        });
+                    } catch (err) {
+                        return res.status(400).json(err);
+                    }
+                }
+            ));
+        }
         await prisma.post.delete({
             where: {
                 id: id,
+            },
+            include: {
+                favorites: true,
             }
         });
         res.redirect('/posts');
     } catch (err) {
         return res.status(400).json(err);
     }
-})
+});
+
+app.post('/favorite/:id', async (req, res) => {
+    const token = localStorage.get('token');
+    try {
+        const decoded = jwt.verify(token, 'SECRETKEY');
+        const email = decoded.email;
+        const currentUser = await prisma.user.findUnique({where: {email}});
+        const userId = parseInt(currentUser.id);
+        const postId = parseInt(req.params.id);
+        try { await prisma.favorite.create({
+            data: {
+                postId,
+                userId,
+            },
+        });
+        res.redirect('/posts');
+        } catch (err) {
+            return res.status(400).json(err);
+        }
+      } catch (err) {
+        console.error({err});
+      }
+});
+app.delete('/favorite/:id', async (req, res) => {
+    const postId = parseInt(req.params.id);
+    const token = localStorage.get('token');
+    try {
+        const decoded = jwt.verify(token, 'SECRETKEY');
+        const email = decoded.email;
+        const currentUser = await prisma.user.findUnique({where: {email}});
+        const userId = parseInt(currentUser.id);
+        try {
+            await prisma.favorite.delete({
+                where: {
+                    userId_postId: {
+                    userId: userId,
+                    postId: postId,
+                }}
+            });
+            res.redirect('/posts');
+        } catch (err) {
+            return res.status(400).json(err);
+        }
+    } catch (err) {
+        return res.status(400).json(err);
+    }
+});
 
 // home page
 app.get('/', isLoggedIn, function(req, res) {
